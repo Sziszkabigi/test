@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+require 'set'
+
+  def uniqelist
+    list = Uniqelist.new
+      if ARGV.length < 1
+      puts "usage: ./parse logfile"
+      exit
+  end
+end
+
+# create some variables that we will need to keep track of stuff
+counter = {} # map: url => counter
+unique_views = {} # map: url => list (set) of ips
+
+# open the file
+begin
+  File.open ARGV[0] do |f|
+    # read all lines of the file into a 'text' variable
+    text = f.read
+
+    text.each_line do |line|
+      url, ip = line.split(' ')
+
+      # we check if url is already present in the counter map
+      if counter.key?(url)
+        # if yes, we increment the current value of the counter for this url
+        counter[url] += 1
+      else
+        # otherwise we start from 1
+        counter[url] = 1
+      end
+
+      # we check if this url already is present in the map
+      if unique_views.key?(url)
+        # if it is, we know that we have a Set there and we can just add the ip to it
+        unique_views[url].add(ip)
+      else
+        # if not, we need to create a set and add this ip to it to start counting unique hits
+        unique_views[url] = Set[ip]
+      end
+    end
+  end
+rescue Errno::ENOENT => _
+  warn "could not open the file #{ARGV[0]}"
+  exit -1
+rescue Errno::EISDIR => _
+  warn "#{ARGV[0]} is a directory, not a file"
+  exit -2
+end
+
+puts "---\ntask1\n---"
+
+# sort descending by amount of page views. "-v" here means reverse order by value
+counter = counter.sort_by{|k,v| -v}.to_h
+
+# output for task 1
+counter.each { |key, value|
+  puts "#{key} #{value} visits"
+}
+
+puts "\n---\ntask2\n---"
+
+# sort descending by amount of unique hits
+unique_views = unique_views.sort_by{|k,v| -v.length()}.to_h
+
+# output for task 2
+unique_views.each { |key, value|
+  puts "#{key} #{value.length()} unique views"
+}
+
+# TODO:
+# 1) they ask for TDD so need to add some tests
+# 2) check if some things can be done more efficiently or cleaner...
